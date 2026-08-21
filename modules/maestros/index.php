@@ -1,5 +1,5 @@
 <?php
-// modules/maestros/index.php - Listado de maestros (VERSIÓN MEJORADA)
+// modules/maestros/index.php - Listado de maestros (VERSIÓN CORREGIDA)
 session_start();
 
 $page_title = 'Gestión de Maestros';
@@ -11,11 +11,12 @@ require_once '../../includes/functions.php';
 // Obtener todos los maestros con estadísticas
 $sql = "SELECT 
             m.*,
-            COUNT(h.id) as total_horarios,
-            COUNT(DISTINCT h.materia_id) as total_materias,
+            COUNT(DISTINCT h.id) as total_horarios,
+            COUNT(DISTINCT mg.materia_id) as total_materias,
             GROUP_CONCAT(DISTINCT h.dia_semana ORDER BY FIELD(h.dia_semana, 'Lunes','Martes','Miercoles','Jueves','Viernes')) as dias
         FROM maestros m
         LEFT JOIN horarios h ON m.id = h.maestro_id AND h.activo = 1
+        LEFT JOIN materias_grupos mg ON m.id = mg.maestro_id
         WHERE m.activo = 1
         GROUP BY m.id
         ORDER BY m.nombre ASC";
@@ -24,21 +25,65 @@ $maestros = obtenerRegistros($sql);
 
 // Obtener estadísticas
 $total_maestros = count($maestros);
-$disponibles = array_filter($maestros, function($m) { return $m['disponible'] == 1; });
-$total_disponibles = count($disponibles);
+$total_horas = array_sum(array_column($maestros, 'total_horarios'));
 
 include '../../includes/header.php';
 ?>
 
 <style>
 /* ============================================
-   ESTILOS MEJORADOS PARA GESTIÓN DE MAESTROS
+   ESTILOS MEJORADOS - ROJO COBAO
    ============================================ */
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(139, 0, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(139, 0, 0, 0.4); }
+}
+
 .maestros-container .card {
     border: none;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.6s ease;
+}
+
+.maestros-container .card:hover {
+    box-shadow: 0 8px 40px rgba(139, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .maestros-container .card-header {
@@ -46,6 +91,7 @@ include '../../includes/header.php';
     border-radius: 16px 16px 0 0 !important;
     border-bottom: 2px solid #e9ecef;
     padding: 20px 25px;
+    transition: all 0.4s ease;
 }
 
 .maestros-container .card-header h5 {
@@ -54,7 +100,12 @@ include '../../includes/header.php';
 }
 
 .maestros-container .card-header h5 i {
-    color: #1976d2;
+    color: #8B0000;
+    transition: all 0.3s ease;
+}
+
+.maestros-container .card-header h5 i:hover {
+    transform: rotate(15deg) scale(1.1);
 }
 
 /* Filtros */
@@ -63,11 +114,17 @@ include '../../includes/header.php';
     border-radius: 12px;
     padding: 15px 20px;
     margin-bottom: 20px;
-    border: 1px solid #e9ecef;
+    border: 2px solid #e9ecef;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.filter-section .form-control,
-.filter-section .form-select {
+.filter-section:hover {
+    border-color: #8B0000;
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.filter-section .form-control {
     border-radius: 10px;
     border: 2px solid #e9ecef;
     padding: 10px 15px;
@@ -75,22 +132,41 @@ include '../../includes/header.php';
     font-size: 0.9rem;
 }
 
-.filter-section .form-control:focus,
-.filter-section .form-select:focus {
-    border-color: #1976d2;
-    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+.filter-section .form-control:focus {
+    border-color: #8B0000;
+    box-shadow: 0 0 0 4px rgba(139, 0, 0, 0.1);
+    transform: scale(1.02);
 }
 
-/* Tabla mejorada - MEJOR DISTRIBUCIÓN */
+.filter-section .form-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+/* Tabla */
 .table-maestros {
     border-radius: 12px;
     overflow: hidden;
-    width: 100%;
+    transition: all 0.3s ease;
 }
 
 .table-maestros thead {
-    background: #1a237e;
+    background: linear-gradient(135deg, #8B0000, #5C0000);
     color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.table-maestros thead::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -200%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s infinite;
 }
 
 .table-maestros thead th {
@@ -101,6 +177,8 @@ include '../../includes/header.php';
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
+    position: relative;
+    z-index: 1;
 }
 
 .table-maestros tbody td {
@@ -108,38 +186,22 @@ include '../../includes/header.php';
     vertical-align: middle;
     border-bottom: 1px solid #f1f3f5;
     font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.table-maestros tbody tr {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .table-maestros tbody tr:hover {
     background: #f8f9fa;
-    transition: all 0.2s ease;
-}
-
-.table-maestros tbody tr {
-    transition: all 0.2s ease;
+    transform: scale(1.01) translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.08);
+    z-index: 2;
 }
 
 /* Badges */
-.badge-estado {
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.65rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.badge-estado.disponible {
-    background: #e8f5e9;
-    color: #2e7d32;
-}
-
-.badge-estado.no-disponible {
-    background: #ffebee;
-    color: #c62828;
-}
-
 .badge-horarios {
     background: #e9ecef;
     color: #495057;
@@ -150,6 +212,13 @@ include '../../includes/header.php';
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge-horarios:hover {
+    background: #8B0000;
+    color: white;
+    transform: scale(1.1) rotate(5deg);
 }
 
 .badge-materias {
@@ -162,9 +231,16 @@ include '../../includes/header.php';
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Botones de acción - MÁS COMPACTOS */
+.badge-materias:hover {
+    background: #1565c0;
+    color: white;
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* Botones de acción */
 .btn-action {
     width: 28px;
     height: 28px;
@@ -173,16 +249,36 @@ include '../../includes/header.php';
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     font-size: 0.75rem;
     cursor: pointer;
     text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.5s ease;
+    transform: translate(-50%, -50%);
+}
+
+.btn-action:active::after {
+    width: 100px;
+    height: 100px;
 }
 
 .btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .btn-action.edit {
@@ -193,6 +289,7 @@ include '../../includes/header.php';
 .btn-action.edit:hover {
     background: #1565c0;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 .btn-action.view {
@@ -203,6 +300,7 @@ include '../../includes/header.php';
 .btn-action.view:hover {
     background: #2e7d32;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 .btn-action.delete {
@@ -213,6 +311,7 @@ include '../../includes/header.php';
 .btn-action.delete:hover {
     background: #c62828;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 /* Nombre del maestro */
@@ -220,11 +319,23 @@ include '../../includes/header.php';
     font-weight: 600;
     color: #1a237e;
     font-size: 0.85rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.maestro-nombre:hover {
+    color: #8B0000;
+    transform: scale(1.02);
 }
 
 .maestro-email {
     font-size: 0.75rem;
     color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.maestro-email:hover {
+    color: #8B0000;
 }
 
 .maestro-especialidad {
@@ -234,42 +345,171 @@ include '../../includes/header.php';
     border-radius: 12px;
     font-size: 0.7rem;
     color: #495057;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.maestro-especialidad:hover {
+    background: #8B0000;
+    color: white;
+    transform: scale(1.05);
 }
 
 /* Total badge */
 .total-badge {
-    background: #1a237e;
+    background: linear-gradient(135deg, #8B0000, #5C0000);
     color: white;
     padding: 8px 20px;
     border-radius: 20px;
     font-weight: 600;
     font-size: 0.9rem;
     display: inline-block;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.total-badge::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: all 0.6s ease;
+}
+
+.total-badge:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.4);
+}
+
+.total-badge:hover::before {
+    opacity: 1;
 }
 
 .total-badge i {
     margin-right: 8px;
 }
 
-.total-badge .badge-disp {
-    background: #4caf50;
+/* Botón Nuevo Maestro */
+.btn-primary-cobao {
+    background: #8B0000;
     color: white;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    margin-left: 5px;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary-cobao::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.6s ease;
+    transform: translate(-50%, -50%);
+}
+
+.btn-primary-cobao:hover {
+    background: #5C0000;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.4);
+    color: white;
+}
+
+.btn-primary-cobao:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+/* Tarjetas de resumen */
+.summary-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(139,0,0,0.05), transparent);
+    opacity: 0;
+    transition: all 0.6s ease;
+}
+
+.summary-card:hover {
+    border-color: #8B0000;
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
+}
+
+.summary-card:hover::before {
+    opacity: 1;
+}
+
+.summary-card .summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #8B0000;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.summary-card:hover .summary-number {
+    transform: scale(1.15);
+    animation: pulse 1s infinite;
+}
+
+.summary-card .summary-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
 }
 
 /* Estado vacío */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
+    transition: all 0.4s ease;
 }
 
 .empty-state i {
     font-size: 4rem;
     color: #dee2e6;
     margin-bottom: 15px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.empty-state:hover i {
+    color: #8B0000;
+    transform: scale(1.2) rotate(10deg);
 }
 
 .empty-state h5 {
@@ -279,6 +519,27 @@ include '../../includes/header.php';
 
 .empty-state p {
     color: #6c757d;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #8B0000;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5C0000;
 }
 
 /* Responsive */
@@ -301,25 +562,11 @@ include '../../includes/header.php';
         height: 24px;
         font-size: 0.65rem;
     }
-}
-
-/* Animación de entrada */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    .summary-number {
+        font-size: 1.5rem;
     }
 }
 
-.maestros-container .card {
-    animation: fadeInUp 0.4s ease;
-}
-
-/* Scroll horizontal en móvil */
 .table-responsive {
     overflow-x: auto;
 }
@@ -339,8 +586,8 @@ include '../../includes/header.php';
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <a href="crear.php" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i> Nuevo Maestro
+                <a href="crear.php" class="btn-primary-cobao">
+                    <i class="fas fa-plus"></i> Nuevo Maestro
                 </a>
             </div>
         </div>
@@ -349,17 +596,7 @@ include '../../includes/header.php';
             <!-- Filtros -->
             <div class="filter-section">
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">
-                            <i class="fas fa-filter me-1"></i> Estado
-                        </label>
-                        <select class="form-select" id="filtro_estado" onchange="filtrarMaestros()">
-                            <option value="">Todos</option>
-                            <option value="1">Disponibles</option>
-                            <option value="0">No disponibles</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
+                    <div class="col-md-9">
                         <label class="form-label fw-semibold">
                             <i class="fas fa-search me-1"></i> Buscar
                         </label>
@@ -370,23 +607,21 @@ include '../../includes/header.php';
                         <span class="total-badge">
                             <i class="fas fa-users"></i>
                             <span id="total_maestros"><?php echo $total_maestros; ?></span> maestros
-                            <span class="badge-disp"><?php echo $total_disponibles; ?> disp.</span>
                         </span>
                     </div>
                 </div>
             </div>
             
-            <!-- Tabla con mejor distribución -->
+            <!-- Tabla -->
             <div class="table-responsive">
                 <table class="table table-maestros" id="tabla_maestros">
                     <thead>
                         <tr>
                             <th style="width: 4%; text-align: center;">#</th>
-                            <th style="width: 18%;">Nombre</th>
+                            <th style="width: 25%;">Nombre</th>
                             <th style="width: 18%;">Email</th>
                             <th style="width: 10%;">Teléfono</th>
-                            <th style="width: 13%;">Especialidad</th>
-                            <th style="width: 9%; text-align: center;">Estado</th>
+                            <th style="width: 15%;">Especialidad</th>
                             <th style="width: 8%; text-align: center;">Horas</th>
                             <th style="width: 8%; text-align: center;">Materias</th>
                             <th style="width: 12%; text-align: center;">Acciones</th>
@@ -395,7 +630,7 @@ include '../../includes/header.php';
                     <tbody>
                         <?php if ($total_maestros > 0): ?>
                             <?php foreach ($maestros as $index => $maestro): ?>
-                                <tr data-disponible="<?php echo $maestro['disponible']; ?>">
+                                <tr>
                                     <td style="text-align: center; font-weight: 600; color: #6c757d; font-size: 0.75rem;">
                                         <?php echo $index + 1; ?>
                                     </td>
@@ -434,17 +669,6 @@ include '../../includes/header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td style="text-align: center;">
-                                        <?php if ($maestro['disponible']): ?>
-                                            <span class="badge-estado disponible">
-                                                <i class="fas fa-circle" style="font-size: 0.4rem;"></i> Activo
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge-estado no-disponible">
-                                                <i class="fas fa-circle" style="font-size: 0.4rem;"></i> Inactivo
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="text-align: center;">
                                         <span class="badge-horarios">
                                             <i class="fas fa-clock"></i>
                                             <?php echo $maestro['total_horarios'] ?? 0; ?>
@@ -476,12 +700,12 @@ include '../../includes/header.php';
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="9">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <i class="fas fa-chalkboard-teacher"></i>
                                         <h5>No hay maestros registrados</h5>
                                         <p>Comienza registrando tu primer maestro</p>
-                                        <a href="crear.php" class="btn btn-primary btn-sm">
+                                        <a href="crear.php" class="btn-primary-cobao">
                                             <i class="fas fa-plus me-1"></i> Registrar maestro
                                         </a>
                                     </div>
@@ -506,31 +730,25 @@ include '../../includes/header.php';
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3 col-sm-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="display-6 text-primary"><?php echo $total_maestros; ?></div>
-                                <small class="text-muted">Total Maestros</small>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-card">
+                                <div class="summary-number"><?php echo $total_maestros; ?></div>
+                                <div class="summary-label">Total Maestros</div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="display-6 text-success"><?php echo $total_disponibles; ?></div>
-                                <small class="text-muted">Disponibles</small>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-card">
+                                <div class="summary-number"><?php echo $total_horas; ?></div>
+                                <div class="summary-label">Horas Asignadas</div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="display-6 text-danger"><?php echo $total_maestros - $total_disponibles; ?></div>
-                                <small class="text-muted">No disponibles</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="display-6 text-warning"><?php 
-                                    $total_horas = array_sum(array_column($maestros, 'total_horarios'));
-                                    echo $total_horas;
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-card">
+                                <div class="summary-number"><?php 
+                                    $total_materias_asignadas = array_sum(array_column($maestros, 'total_materias'));
+                                    echo $total_materias_asignadas;
                                 ?></div>
-                                <small class="text-muted">Horas asignadas</small>
+                                <div class="summary-label">Materias Asignadas</div>
                             </div>
                         </div>
                     </div>
@@ -546,7 +764,6 @@ include '../../includes/header.php';
 // ============================================
 
 function filtrarMaestros() {
-    const estado = document.getElementById('filtro_estado').value;
     const busqueda = document.getElementById('filtro_busqueda').value.toLowerCase();
     const rows = document.querySelectorAll('#tabla_maestros tbody tr');
     let visibles = 0;
@@ -554,15 +771,10 @@ function filtrarMaestros() {
     rows.forEach(row => {
         if (row.querySelector('td[colspan]')) return;
         
-        const disponible = row.getAttribute('data-disponible');
         const nombre = row.querySelector('td:nth-child(2) .maestro-nombre')?.textContent?.toLowerCase() || '';
         const especialidad = row.querySelector('td:nth-child(5) .maestro-especialidad')?.textContent?.toLowerCase() || '';
         
         let mostrar = true;
-        
-        if (estado && disponible !== estado) {
-            mostrar = false;
-        }
         
         if (busqueda && !nombre.includes(busqueda) && !especialidad.includes(busqueda)) {
             mostrar = false;

@@ -1,5 +1,5 @@
 <?php
-// modules/grupos/index.php - Listado de grupos (VERSIÓN CORREGIDA)
+// modules/grupos/index.php - Listado de grupos (VERSIÓN MEJORADA)
 session_start();
 
 $page_title = 'Gestión de Grupos';
@@ -45,13 +45,58 @@ include '../../includes/header.php';
 
 <style>
 /* ============================================
-   ESTILOS MEJORADOS PARA GESTIÓN DE GRUPOS
+   ESTILOS MEJORADOS - ROJO COBAO CON ANIMACIONES
    ============================================ */
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(139, 0, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(139, 0, 0, 0.4); }
+}
+
 .grupos-container .card {
     border: none;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.6s ease;
+}
+
+.grupos-container .card:hover {
+    box-shadow: 0 8px 40px rgba(139, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .grupos-container .card-header {
@@ -59,6 +104,7 @@ include '../../includes/header.php';
     border-radius: 16px 16px 0 0 !important;
     border-bottom: 2px solid #e9ecef;
     padding: 20px 25px;
+    transition: all 0.4s ease;
 }
 
 .grupos-container .card-header h5 {
@@ -67,16 +113,28 @@ include '../../includes/header.php';
 }
 
 .grupos-container .card-header h5 i {
-    color: #1976d2;
+    color: #8B0000;
+    transition: all 0.3s ease;
 }
 
-/* Filtros */
+.grupos-container .card-header h5 i:hover {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Filtros con animación */
 .filter-section {
     background: #f8f9fa;
     border-radius: 12px;
     padding: 15px 20px;
     margin-bottom: 20px;
-    border: 1px solid #e9ecef;
+    border: 2px solid #e9ecef;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-section:hover {
+    border-color: #8B0000;
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 .filter-section .form-control,
@@ -90,52 +148,82 @@ include '../../includes/header.php';
 
 .filter-section .form-control:focus,
 .filter-section .form-select:focus {
-    border-color: #1976d2;
-    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+    border-color: #8B0000;
+    box-shadow: 0 0 0 4px rgba(139, 0, 0, 0.1);
+    transform: scale(1.02);
 }
 
-/* Tabla mejorada */
+/* Tabla mejorada con animaciones */
 .table-grupos {
     border-radius: 12px;
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .table-grupos thead {
-    background: #1a237e;
+    background: linear-gradient(135deg, #8B0000, #5C0000);
     color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.table-grupos thead::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -200%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s infinite;
 }
 
 .table-grupos thead th {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     padding: 12px 15px;
     border: none;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
 }
 
 .table-grupos tbody td {
     padding: 10px 15px;
     vertical-align: middle;
     border-bottom: 1px solid #f1f3f5;
+    transition: all 0.3s ease;
+}
+
+.table-grupos tbody tr {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .table-grupos tbody tr:hover {
     background: #f8f9fa;
-    transition: all 0.2s ease;
+    transform: scale(1.01) translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.08);
+    z-index: 2;
 }
 
-.table-grupos tbody tr {
-    transition: all 0.2s ease;
+.table-grupos tbody tr:active {
+    transform: scale(0.99);
 }
 
-/* Badges */
+/* Badges con animaciones */
 .badge-semestre {
     font-weight: 600;
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     display: inline-block;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge-semestre:hover {
+    transform: scale(1.1) rotate(-2deg);
 }
 
 .badge-semestre.basico {
@@ -156,23 +244,46 @@ include '../../includes/header.php';
 .badge-especialidad {
     background: #e3f2fd;
     color: #1565c0;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     padding: 3px 10px;
     border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+.badge-especialidad:hover {
+    background: #1565c0;
+    color: white;
+    transform: scale(1.05);
 }
 
 .badge-nucleo {
     background: #f3e5f5;
     color: #6a1b9a;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     padding: 3px 10px;
     border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+.badge-nucleo:hover {
+    background: #6a1b9a;
+    color: white;
+    transform: scale(1.05);
 }
 
 .badge-grupo {
     font-weight: 700;
     font-size: 1rem;
     color: #1a237e;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.badge-grupo:hover {
+    color: #8B0000;
+    transform: scale(1.05);
 }
 
 .badge-horarios {
@@ -180,8 +291,16 @@ include '../../includes/header.php';
     color: #495057;
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+.badge-horarios:hover {
+    background: #8B0000;
+    color: white;
+    transform: scale(1.1) rotate(5deg);
 }
 
 .badge-materias {
@@ -189,11 +308,19 @@ include '../../includes/header.php';
     color: #2e7d32;
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
 }
 
-/* Botones de acción */
+.badge-materias:hover {
+    background: #2e7d32;
+    color: white;
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* Botones de acción con animaciones mejoradas */
 .btn-action {
     width: 32px;
     height: 32px;
@@ -202,16 +329,36 @@ include '../../includes/header.php';
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     font-size: 0.85rem;
     cursor: pointer;
     text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.5s ease;
+    transform: translate(-50%, -50%);
+}
+
+.btn-action:active::after {
+    width: 100px;
+    height: 100px;
 }
 
 .btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .btn-action.edit {
@@ -222,6 +369,7 @@ include '../../includes/header.php';
 .btn-action.edit:hover {
     background: #1565c0;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 .btn-action.view {
@@ -232,6 +380,7 @@ include '../../includes/header.php';
 .btn-action.view:hover {
     background: #2e7d32;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 .btn-action.delete {
@@ -242,6 +391,7 @@ include '../../includes/header.php';
 .btn-action.delete:hover {
     background: #c62828;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
 .btn-action.horarios {
@@ -252,44 +402,96 @@ include '../../includes/header.php';
 .btn-action.horarios:hover {
     background: #e65100;
     color: white;
+    animation: glow 1.5s infinite;
 }
 
-/* Total badge */
+/* Total badge con animación */
 .total-badge {
-    background: #1a237e;
+    background: linear-gradient(135deg, #8B0000, #5C0000);
     color: white;
     padding: 8px 20px;
     border-radius: 20px;
     font-weight: 600;
     font-size: 0.9rem;
     display: inline-block;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.total-badge::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: all 0.6s ease;
+}
+
+.total-badge:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.4);
+}
+
+.total-badge:hover::before {
+    opacity: 1;
 }
 
 .total-badge i {
     margin-right: 8px;
 }
 
-/* Tarjetas de semestres */
+/* Tarjetas de semestres con animaciones mejoradas */
 .semestre-card {
     border: 2px solid #e9ecef;
     border-radius: 12px;
     padding: 15px;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     height: 100%;
     background: white;
     text-align: center;
+    animation: slideIn 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.semestre-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(139,0,0,0.05), transparent);
+    opacity: 0;
+    transition: all 0.6s ease;
 }
 
 .semestre-card:hover {
-    border-color: #1976d2;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-color: #8B0000;
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
+}
+
+.semestre-card:hover::before {
+    opacity: 1;
 }
 
 .semestre-card .semestre-number {
     font-size: 1.5rem;
     font-weight: 700;
     color: #1a237e;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.semestre-card:hover .semestre-number {
+    color: #8B0000;
+    transform: scale(1.2);
 }
 
 .semestre-card .semestre-type {
@@ -297,30 +499,92 @@ include '../../includes/header.php';
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
 }
 
 .semestre-card .semestre-count {
     font-size: 2rem;
     font-weight: 700;
-    color: #1976d2;
+    color: #8B0000;
     margin: 5px 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.semestre-card:hover .semestre-count {
+    transform: scale(1.2);
+    animation: pulse 1s infinite;
 }
 
 .semestre-card .semestre-label {
     font-size: 0.75rem;
     color: #6c757d;
+    position: relative;
+    z-index: 1;
+}
+
+/* Botón Nuevo Grupo */
+.btn-primary-cobao {
+    background: #8B0000;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary-cobao::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.6s ease;
+    transform: translate(-50%, -50%);
+}
+
+.btn-primary-cobao:hover {
+    background: #5C0000;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 20px rgba(139, 0, 0, 0.4);
+    color: white;
+}
+
+.btn-primary-cobao:active::after {
+    width: 200px;
+    height: 200px;
 }
 
 /* Estado vacío */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
+    transition: all 0.4s ease;
 }
 
 .empty-state i {
     font-size: 4rem;
     color: #dee2e6;
     margin-bottom: 15px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.empty-state:hover i {
+    color: #8B0000;
+    transform: scale(1.2) rotate(10deg);
 }
 
 .empty-state h5 {
@@ -332,17 +596,38 @@ include '../../includes/header.php';
     color: #6c757d;
 }
 
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #8B0000;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5C0000;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .filter-section .row {
         gap: 10px;
     }
     .table-grupos {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
     .table-grupos thead th,
     .table-grupos tbody td {
-        padding: 6px 10px;
+        padding: 6px 8px;
     }
     .btn-action {
         width: 26px;
@@ -360,21 +645,13 @@ include '../../includes/header.php';
     }
 }
 
-/* Animación de entrada */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.grupos-container .card {
-    animation: fadeInUp 0.4s ease;
-}
+/* Delay de animación para tarjetas de semestre */
+.semestre-card:nth-child(1) { animation-delay: 0.05s; }
+.semestre-card:nth-child(2) { animation-delay: 0.1s; }
+.semestre-card:nth-child(3) { animation-delay: 0.15s; }
+.semestre-card:nth-child(4) { animation-delay: 0.2s; }
+.semestre-card:nth-child(5) { animation-delay: 0.25s; }
+.semestre-card:nth-child(6) { animation-delay: 0.3s; }
 </style>
 
 <div class="grupos-container">
@@ -391,8 +668,8 @@ include '../../includes/header.php';
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <a href="crear.php" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i> Nuevo Grupo
+                <a href="crear.php" class="btn-primary-cobao">
+                    <i class="fas fa-plus"></i> Nuevo Grupo
                 </a>
             </div>
         </div>
@@ -448,7 +725,7 @@ include '../../includes/header.php';
                         <?php if ($total_grupos > 0): ?>
                             <?php foreach ($grupos as $index => $grupo): ?>
                                 <tr data-semestre="<?php echo $grupo['semestre_id']; ?>">
-                                    <td style="text-align: center; font-weight: 600; color: #6c757d;">
+                                    <td style="text-align: center; font-weight: 600; color: #6c757d; font-size: 0.75rem;">
                                         <?php echo $index + 1; ?>
                                     </td>
                                     <td>
@@ -469,7 +746,7 @@ include '../../includes/header.php';
                                             <?php echo $grupo['semestre_numero']; ?>°
                                         </span>
                                         <br>
-                                        <small class="text-muted" style="font-size: 0.65rem;">
+                                        <small class="text-muted" style="font-size: 0.6rem;">
                                             <?php echo ucfirst($grupo['semestre_tipo']); ?>
                                         </small>
                                     </td>
@@ -485,7 +762,7 @@ include '../../includes/header.php';
                                                 <?php echo htmlspecialchars($grupo['nucleo_nombre']); ?>
                                             </span>
                                         <?php else: ?>
-                                            <span class="text-muted" style="font-size: 0.8rem;">-</span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td style="text-align: center;">
@@ -529,7 +806,7 @@ include '../../includes/header.php';
                                         <i class="fas fa-users"></i>
                                         <h5>No hay grupos registrados</h5>
                                         <p>Comienza creando tu primer grupo</p>
-                                        <a href="crear.php" class="btn btn-primary btn-sm">
+                                        <a href="crear.php" class="btn-primary-cobao">
                                             <i class="fas fa-plus me-1"></i> Crear grupo
                                         </a>
                                     </div>
@@ -641,6 +918,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = '';
             filtrarGrupos();
         }
+    });
+    
+    // Animación de entrada para las tarjetas de semestre
+    const cards = document.querySelectorAll('.semestre-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = (index * 0.1) + 's';
     });
 });
 </script>
