@@ -1,0 +1,19 @@
+# .htaccess - Configuración del servidor
+
+# Activar el motor de reescritura
+RewriteEngine On
+
+# Prevenir el listado de directorios
+Options -Indexes
+
+# Redirigir errores 404
+ErrorDocument 404 /cobaohorarios/index.php
+
+# Proteger archivos sensibles
+<FilesMatch "^(config|database|functions)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Configurar zona horaria
+SetEnv TZ America/Mexico_City
